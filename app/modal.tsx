@@ -1,29 +1,290 @@
-import { Link } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { pickImage } from "@/utils/imagePicker";
+import { writeLocalStorage } from "@/utils/localStorage";
+import Feather from "@expo/vector-icons/Feather";
+import { router } from "expo-router";
+import React, { useRef, useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+export default function NewPostModal() {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [tags, setTags] = useState("");
+  const [image, setImage] = useState<string | null>(null);
 
-export default function ModalScreen() {
+  const textColor = useThemeColor({}, "text");
+  const backgroundColor = useThemeColor({}, "background");
+  const iconColor = useThemeColor({}, "icon");
+
+  const titleRef = useRef<TextInput>(null);
+  const bodyRef = useRef<TextInput>(null);
+  const tagsRef = useRef<TextInput>(null);
+  const imageRef = useRef<TextInput>(null);
+
+  const handleClear = () => {
+    setTitle("");
+    setBody("");
+    setTags("");
+    setImage(null);
+  };
+
+  const handlePublish = () => {
+    const tagsArray = tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag);
+    writeLocalStorage("posts", {
+      title,
+      body,
+      tags: tagsArray,
+      image,
+      id: Date.now(),
+    });
+    router.back();
+  };
+
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title">This is a modal</ThemedText>
-      <Link href="/" dismissTo style={styles.link}>
-        <ThemedText type="link">Go to home screen</ThemedText>
-      </Link>
-    </ThemedView>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 80}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
+        <View style={styles.formContainer}>
+          {/* Title Field */}
+          <View style={styles.fieldContainer}>
+            <View style={styles.labelContainer}>
+              <Feather name="type" size={16} color="#007AFF" />
+              <Text style={[styles.label, { color: textColor }]}>Title</Text>
+            </View>
+            <TextInput
+              style={[
+                styles.input,
+                { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
+              ]}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Enter an engaging title..."
+              placeholderTextColor={iconColor}
+            />
+          </View>
+
+          {/* Content Field */}
+          <View style={styles.fieldContainer}>
+            <View style={styles.labelContainer}>
+              <Feather name="edit-3" size={16} color="#007AFF" />
+              <Text style={[styles.label, { color: textColor }]}>Content</Text>
+            </View>
+            <TextInput
+              style={[
+                styles.input,
+                styles.textArea,
+                { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
+              ]}
+              value={body}
+              onChangeText={setBody}
+              placeholder="Tell your story..."
+              placeholderTextColor={iconColor}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Tags Field */}
+          <View style={styles.fieldContainer}>
+            <View style={styles.labelContainer}>
+              <Feather name="tag" size={16} color="#007AFF" />
+              <Text style={[styles.label, { color: textColor }]}>Tags</Text>
+            </View>
+            <TextInput
+              style={[
+                styles.input,
+                { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
+              ]}
+              value={tags}
+              onChangeText={setTags}
+              placeholder="Type a tag and press Enter..."
+              placeholderTextColor={iconColor}
+            />
+          </View>
+
+          {/* Image Field */}
+          <View style={styles.fieldContainer}>
+            <View style={styles.labelContainer}>
+              <Feather name="image" size={16} color="#007AFF" />
+              <Text style={[styles.label, { color: textColor }]}>Image</Text>
+            </View>
+            <Pressable style={styles.imageUpload} onPress={() => pickImage(setImage)}>
+              <Feather name="upload" size={24} color="#007AFF" />
+              <Text style={styles.uploadText}>Click to upload an image</Text>
+              <Text style={styles.uploadSubtext}>Max size: 5MB</Text>
+            </Pressable>
+          </View>
+
+          {/* Buttons */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
+              <Text style={styles.clearButtonText}>Clear</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
+              <Text style={styles.publishButtonText}>Publish Post</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
   },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "white",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: "rgba(255, 255, 255, 0.8)",
+    textAlign: "center",
+  },
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 40,
+  },
+  fieldContainer: {
+    marginBottom: 24,
+  },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    marginLeft: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#111827",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  textArea: {
+    height: 120,
+    paddingTop: 12,
+  },
+  imageUpload: {
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    borderStyle: "dashed",
+    borderRadius: 12,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  uploadText: {
+    fontSize: 16,
+    color: "#007AFF",
+    fontWeight: "500",
+    marginTop: 8,
+  },
+  uploadSubtext: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginTop: 4,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    gap: 16,
+    marginTop: 32,
+  },
+  clearButton: {
+    flex: 1,
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  clearButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  publishButton: {
+    flex: 1,
+    backgroundColor: "#007AFF",
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+    shadowColor: "#007AFF",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  publishButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "white",
   },
 });
