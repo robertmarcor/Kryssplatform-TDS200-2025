@@ -44,6 +44,15 @@ export default function Settings() {
           }}>
           <ThemedText style={styles.buttonText}>Clear Profile</ThemedText>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          activeOpacity={0.8}
+          onPress={() => {
+            removeLocalStorage("posts");
+            Alert.alert("Posts Cleared", "Posts have been cleared");
+          }}>
+          <ThemedText style={styles.buttonText}>Clear Posts</ThemedText>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -75,6 +84,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 8,
     borderRadius: 16,
+    gap: 12,
   },
   button: {
     backgroundColor: "red",

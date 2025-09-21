@@ -1,10 +1,10 @@
 import Posts from "@/components/Posts";
 import { ThemedText } from "@/components/themed-text";
 import { Post } from "@/types/post";
-import { writeLocalStorage } from "@/utils/localStorage";
+import { readLocalStorage } from "@/utils/localStorage";
 import { router, Stack } from "expo-router";
-import React, { useEffect } from "react";
-import { FlatList, Pressable, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { FlatList, Pressable, RefreshControl, View } from "react-native";
 
 const dummyPosts: Post[] = [
   {
@@ -66,18 +66,24 @@ const dummyPosts: Post[] = [
 ];
 
 export default function Index() {
-  useEffect(() => {
-    // Save all dummy posts to localStorage on component mount
-    const savePosts = async () => {
-      try {
-        await writeLocalStorage("allPosts", dummyPosts);
-        console.log("Dummy posts saved to localStorage");
-      } catch (error) {
-        console.error("Failed to save posts:", error);
-      }
-    };
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const allPosts = [...dummyPosts, ...posts];
+  const sortedPosts = allPosts.sort((a, b) => b.id - a.id);
 
-    savePosts();
+  const loadPosts = async () => {
+    const posts = await readLocalStorage<Post[]>("posts");
+    setPosts(posts || []);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadPosts();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    loadPosts();
   }, []);
 
   return (
@@ -90,7 +96,8 @@ export default function Index() {
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               onPress={() => {
                 router.push("/modal");
-              }}>
+              }}
+              onBlur={loadPosts}>
               <ThemedText style={{ color: "#007AFF", fontWeight: "bold" }}>New +</ThemedText>
             </Pressable>
           ),
@@ -99,11 +106,20 @@ export default function Index() {
       <FlatList
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingVertical: 16 }}
-        data={dummyPosts}
+        data={sortedPosts}
         renderItem={({ item }) => <Posts post={item} />}
         keyExtractor={(item) => item.id.toString()}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#007AFF"
+            title="Pull to refresh"
+            titleColor="#666"
+          />
+        }
       />
     </>
   );

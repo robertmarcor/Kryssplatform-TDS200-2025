@@ -1,12 +1,14 @@
+import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { pickImage } from "@/utils/imagePicker";
-import { writeLocalStorage } from "@/utils/localStorage";
+import { appendLocalStorage } from "@/utils/localStorage";
+import { scrollToInput } from "@/utils/scrollTo";
 import Feather from "@expo/vector-icons/Feather";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,30 +22,21 @@ export default function NewPostModal() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [tags, setTags] = useState("");
+  const [tagsArray, setTagsArray] = useState<string[]>([]);
   const [image, setImage] = useState<string | null>(null);
-
+  const tagsRef = useRef<TextInput>(null);
   const textColor = useThemeColor({}, "text");
   const backgroundColor = useThemeColor({}, "background");
   const iconColor = useThemeColor({}, "icon");
 
-  const titleRef = useRef<TextInput>(null);
-  const bodyRef = useRef<TextInput>(null);
-  const tagsRef = useRef<TextInput>(null);
-  const imageRef = useRef<TextInput>(null);
-
-  const handleClear = () => {
-    setTitle("");
-    setBody("");
-    setTags("");
-    setImage(null);
-  };
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const handlePublish = () => {
     const tagsArray = tags
       .split(",")
       .map((tag) => tag.trim())
       .filter((tag) => tag);
-    writeLocalStorage("posts", {
+    appendLocalStorage("posts", {
       title,
       body,
       tags: tagsArray,
@@ -54,11 +47,9 @@ export default function NewPostModal() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 80}>
+    <KeyboardAvoidingView style={styles.container} behavior={"padding"} keyboardVerticalOffset={80}>
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
@@ -70,6 +61,7 @@ export default function NewPostModal() {
               <Text style={[styles.label, { color: textColor }]}>Title</Text>
             </View>
             <TextInput
+              onFocus={() => scrollToInput(scrollViewRef)}
               style={[
                 styles.input,
                 { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
@@ -110,15 +102,27 @@ export default function NewPostModal() {
               <Text style={[styles.label, { color: textColor }]}>Tags</Text>
             </View>
             <TextInput
+              onFocus={() => scrollToInput(scrollViewRef)}
               style={[
                 styles.input,
                 { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
               ]}
               value={tags}
+              ref={tagsRef}
               onChangeText={setTags}
               placeholder="Type a tag and press Enter..."
               placeholderTextColor={iconColor}
+              enablesReturnKeyAutomatically={true}
+              onSubmitEditing={() => {
+                setTagsArray([...tagsArray, tags]);
+                tagsRef.current?.clear();
+              }}
             />
+            {tagsArray.map((tag, id) => (
+              <ThemedText key={id} style={styles.label}>
+                #{tag}
+              </ThemedText>
+            ))}
           </View>
 
           {/* Image Field */}
@@ -127,17 +131,24 @@ export default function NewPostModal() {
               <Feather name="image" size={16} color="#007AFF" />
               <Text style={[styles.label, { color: textColor }]}>Image</Text>
             </View>
-            <Pressable style={styles.imageUpload} onPress={() => pickImage(setImage)}>
-              <Feather name="upload" size={24} color="#007AFF" />
-              <Text style={styles.uploadText}>Click to upload an image</Text>
-              <Text style={styles.uploadSubtext}>Max size: 5MB</Text>
-            </Pressable>
+            {image ? (
+              <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
+            ) : (
+              <Pressable
+                style={styles.imageUpload}
+                onPress={() => pickImage(setImage)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Feather name="upload" size={24} color="#007AFF" />
+                <Text style={styles.uploadText}>Click to upload an image</Text>
+                <Text style={styles.uploadSubtext}>Max size: 5MB</Text>
+              </Pressable>
+            )}
           </View>
 
           {/* Buttons */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
-              <Text style={styles.clearButtonText}>Clear</Text>
+            <TouchableOpacity style={styles.clearButton} onPress={() => router.back()}>
+              <Text style={styles.clearButtonText}>Cancel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
@@ -193,10 +204,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#374151",
+    fontSize: 12,
+    color: "#007AFF",
     marginLeft: 8,
+    marginTop: 4,
   },
   input: {
     borderWidth: 1,
@@ -218,6 +229,10 @@ const styles = StyleSheet.create({
   textArea: {
     height: 120,
     paddingTop: 12,
+  },
+  image: {
+    height: 200,
+    borderRadius: 6,
   },
   imageUpload: {
     borderWidth: 2,

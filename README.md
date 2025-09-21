@@ -12,6 +12,8 @@ A React Native app built with Expo during TDS200
 
 ## Getting Started
 
+## Running EXPO SDK54
+
 ```bash
 npm install
 npx expo start

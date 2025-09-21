@@ -27,6 +27,24 @@ export const readLocalStorage = async <T>(key: string): Promise<T | null> => {
   }
 };
 
+export const appendLocalStorage = async (key: string, obj: object) => {
+  try {
+    const data = await AsyncStorage.getItem(key);
+    if (!data) {
+      await writeLocalStorage(key, [obj]);
+    } else {
+      const parsedData = JSON.parse(data);
+      // Ensure parsedData is an array
+      const dataArray = Array.isArray(parsedData) ? parsedData : [parsedData];
+      dataArray.push(obj);
+      await AsyncStorage.setItem(key, JSON.stringify(dataArray));
+      console.log("Appended ✅", `Data appended to key "${key}"`);
+    }
+  } catch (e) {
+    console.log("Error ❌", `Could not append data\n${String(e)}`);
+  }
+};
+
 export const removeLocalStorage = async (key: string) => {
   try {
     const item = await AsyncStorage.getItem(key);

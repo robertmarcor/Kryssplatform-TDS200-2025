@@ -4,6 +4,7 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import { Profile } from "@/types/profile";
 import { pickImage } from "@/utils/imagePicker";
 import { readLocalStorage, writeLocalStorage } from "@/utils/localStorage";
+import { scrollToInput } from "@/utils/scrollTo";
 import Feather from "@expo/vector-icons/Feather";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -59,10 +60,6 @@ export default function ProfilePage() {
     loadProfile();
   }, []);
 
-  const scrollToInput = () => {
-    scrollViewRef.current?.scrollTo({ y: 300, animated: true });
-  };
-
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
       <ScrollView ref={scrollViewRef} contentContainerStyle={{ flexGrow: 1 }}>
@@ -93,7 +90,7 @@ export default function ProfilePage() {
                     ref={nameRef}
                     value={name}
                     onChangeText={setName}
-                    onFocus={scrollToInput}
+                    onFocus={() => scrollToInput(scrollViewRef)}
                     style={[
                       styles.input,
                       {
@@ -116,7 +113,7 @@ export default function ProfilePage() {
                     ref={genderRef}
                     value={gender}
                     onChangeText={setGender}
-                    onFocus={scrollToInput}
+                    onFocus={() => scrollToInput(scrollViewRef)}
                     style={[
                       styles.input,
                       {
@@ -139,7 +136,7 @@ export default function ProfilePage() {
                     ref={bioRef}
                     value={bio}
                     onChangeText={setBio}
-                    onFocus={scrollToInput}
+                    onFocus={() => scrollToInput(scrollViewRef)}
                     style={[
                       styles.input,
                       {
