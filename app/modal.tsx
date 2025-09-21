@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import Camera from "@/utils/camera";
 import { pickImage } from "@/utils/imagePicker";
 import { appendLocalStorage } from "@/utils/localStorage";
 import { scrollToInput } from "@/utils/scrollTo";
@@ -24,6 +25,7 @@ export default function NewPostModal() {
   const [tags, setTags] = useState("");
   const [tagsArray, setTagsArray] = useState<string[]>([]);
   const [image, setImage] = useState<string | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
   const tagsRef = useRef<TextInput>(null);
   const textColor = useThemeColor({}, "text");
   const backgroundColor = useThemeColor({}, "background");
@@ -47,117 +49,148 @@ export default function NewPostModal() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={"padding"} keyboardVerticalOffset={80}>
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
-        <View style={styles.formContainer}>
-          {/* Title Field */}
-          <View style={styles.fieldContainer}>
-            <View style={styles.labelContainer}>
-              <Feather name="type" size={16} color="#007AFF" />
-              <Text style={[styles.label, { color: textColor }]}>Title</Text>
-            </View>
-            <TextInput
-              onFocus={() => scrollToInput(scrollViewRef)}
-              style={[
-                styles.input,
-                { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
-              ]}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Enter an engaging title..."
-              placeholderTextColor={iconColor}
-            />
-          </View>
-
-          {/* Content Field */}
-          <View style={styles.fieldContainer}>
-            <View style={styles.labelContainer}>
-              <Feather name="edit-3" size={16} color="#007AFF" />
-              <Text style={[styles.label, { color: textColor }]}>Content</Text>
-            </View>
-            <TextInput
-              style={[
-                styles.input,
-                styles.textArea,
-                { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
-              ]}
-              value={body}
-              onChangeText={setBody}
-              placeholder="Tell your story..."
-              placeholderTextColor={iconColor}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Tags Field */}
-          <View style={styles.fieldContainer}>
-            <View style={styles.labelContainer}>
-              <Feather name="tag" size={16} color="#007AFF" />
-              <Text style={[styles.label, { color: textColor }]}>Tags</Text>
-            </View>
-            <TextInput
-              onFocus={() => scrollToInput(scrollViewRef)}
-              style={[
-                styles.input,
-                { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
-              ]}
-              value={tags}
-              ref={tagsRef}
-              onChangeText={setTags}
-              placeholder="Type a tag and press Enter..."
-              placeholderTextColor={iconColor}
-              enablesReturnKeyAutomatically={true}
-              onSubmitEditing={() => {
-                setTagsArray([...tagsArray, tags]);
-                tagsRef.current?.clear();
-              }}
-            />
-            {tagsArray.map((tag, id) => (
-              <ThemedText key={id} style={styles.label}>
-                #{tag}
-              </ThemedText>
-            ))}
-          </View>
-
-          {/* Image Field */}
-          <View style={styles.fieldContainer}>
-            <View style={styles.labelContainer}>
-              <Feather name="image" size={16} color="#007AFF" />
-              <Text style={[styles.label, { color: textColor }]}>Image</Text>
-            </View>
-            {image ? (
-              <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
-            ) : (
-              <Pressable
-                style={styles.imageUpload}
-                onPress={() => pickImage(setImage)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <Feather name="upload" size={24} color="#007AFF" />
-                <Text style={styles.uploadText}>Click to upload an image</Text>
-                <Text style={styles.uploadSubtext}>Max size: 5MB</Text>
-              </Pressable>
-            )}
-          </View>
-
-          {/* Buttons */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.clearButton} onPress={() => router.back()}>
-              <Text style={styles.clearButtonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
-              <Text style={styles.publishButtonText}>Publish Post</Text>
-            </TouchableOpacity>
-          </View>
+    <>
+      {showCamera && (
+        <View style={styles.cameraOverlay}>
+          <Camera
+            onClose={() => setShowCamera(false)}
+            onPhotoTaken={(uri) => {
+              setImage(uri);
+              setShowCamera(false);
+            }}
+          />
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      )}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={"padding"}
+        keyboardVerticalOffset={80}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}>
+          <View style={styles.formContainer}>
+            {/* Title Field */}
+            <View style={styles.fieldContainer}>
+              <View style={styles.labelContainer}>
+                <Feather name="type" size={16} color="#007AFF" />
+                <Text style={[styles.label, { color: textColor }]}>Title</Text>
+              </View>
+              <TextInput
+                onFocus={() => scrollToInput(scrollViewRef)}
+                style={[
+                  styles.input,
+                  { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
+                ]}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Enter an engaging title..."
+                placeholderTextColor={iconColor}
+              />
+            </View>
+
+            {/* Content Field */}
+            <View style={styles.fieldContainer}>
+              <View style={styles.labelContainer}>
+                <Feather name="edit-3" size={16} color="#007AFF" />
+                <Text style={[styles.label, { color: textColor }]}>Content</Text>
+              </View>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.textArea,
+                  { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
+                ]}
+                value={body}
+                onChangeText={setBody}
+                placeholder="Tell your story..."
+                placeholderTextColor={iconColor}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Tags Field */}
+            <View style={styles.fieldContainer}>
+              <View style={styles.labelContainer}>
+                <Feather name="tag" size={16} color="#007AFF" />
+                <Text style={[styles.label, { color: textColor }]}>Tags</Text>
+              </View>
+              <TextInput
+                onFocus={() => scrollToInput(scrollViewRef)}
+                style={[
+                  styles.input,
+                  { color: textColor, backgroundColor: backgroundColor, borderColor: iconColor },
+                ]}
+                value={tags}
+                ref={tagsRef}
+                onChangeText={setTags}
+                placeholder="Type a tag and press Enter..."
+                placeholderTextColor={iconColor}
+                enablesReturnKeyAutomatically={true}
+                onSubmitEditing={() => {
+                  setTagsArray([...tagsArray, tags]);
+                  tagsRef.current?.clear();
+                }}
+              />
+              {tagsArray.map((tag, id) => (
+                <ThemedText key={id} style={styles.label}>
+                  #{tag}
+                </ThemedText>
+              ))}
+            </View>
+
+            {/* Image Field */}
+            <View style={styles.fieldContainer}>
+              <View style={styles.labelContainer}>
+                <Feather name="image" size={16} color="#007AFF" />
+                <Text style={[styles.label, { color: textColor }]}>Image</Text>
+              </View>
+              {image ? (
+                <View>
+                  <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
+                  <Pressable style={styles.removeImageButton} onPress={() => setImage(null)}>
+                    <Feather name="x" size={16} color="#fff" />
+                  </Pressable>
+                </View>
+              ) : (
+                <View style={styles.imageUploadContainer}>
+                  <Pressable
+                    style={styles.imageUploadButton}
+                    onPress={() => pickImage(setImage)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Feather name="image" size={24} color="#007AFF" />
+                    <Text style={styles.uploadText}>Gallery</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.imageUploadButton}
+                    onPress={() => {
+                      setShowCamera(true);
+                    }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Feather name="camera" size={24} color="#007AFF" />
+                    <Text style={styles.uploadText}>Camera</Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
+
+            {/* Buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.clearButton} onPress={() => router.back()}>
+                <Text style={styles.clearButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
+                <Text style={styles.publishButtonText}>Publish Post</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -234,13 +267,29 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 6,
   },
-  imageUpload: {
+  imageUploadContainer: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  imageUploadButton: {
+    flex: 1,
     borderWidth: 2,
     borderColor: "#E5E7EB",
     borderStyle: "dashed",
     borderRadius: 12,
-    paddingVertical: 32,
-    paddingHorizontal: 24,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "#FF3B30",
+    borderRadius: 12,
+    width: 24,
+    height: 24,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -301,5 +350,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "white",
+  },
+  cameraOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+    backgroundColor: "black",
   },
 });

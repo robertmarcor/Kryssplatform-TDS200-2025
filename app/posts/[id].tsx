@@ -15,11 +15,13 @@ export default function PostView() {
     const loadPost = async () => {
       try {
         // Get all posts from localStorage
-        const allPosts = await readLocalStorage<Post[]>("allPosts");
+        const posts = await readLocalStorage<Post[]>("posts");
+        const dummyPosts = await readLocalStorage<Post[]>("allPosts");
+        const allPosts = [...(posts || []), ...(dummyPosts || [])];
 
         if (allPosts && id) {
           // Find the specific post by ID
-          const foundPost = allPosts.find((post) => post.id === parseInt(id));
+          const foundPost = allPosts?.find((post) => post.id === parseInt(id));
           setPost(foundPost || null);
         } else {
           setPost(null);
@@ -33,7 +35,7 @@ export default function PostView() {
     };
 
     loadPost();
-  }, [id]); // Add id as dependency
+  }, [id]);
 
   if (loading) {
     return (
@@ -60,10 +62,10 @@ export default function PostView() {
 
       {post ? (
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <Image source={post.image} style={styles.postImage} />
+          <Image source={{ uri: post.image || "" }} style={styles.postImage} />
 
           <View style={styles.contentContainer}>
-            <ThemedText style={styles.title}>{post.title}</ThemedText>
+            <ThemedText style={styles.title}>{post?.title}</ThemedText>
 
             <View style={styles.tagsContainer}>
               {post.tags.map((tag, index) => (
@@ -96,7 +98,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   postImage: {
-    width: "100%",
     height: 250,
     resizeMode: "cover",
   },
